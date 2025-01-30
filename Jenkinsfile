@@ -20,29 +20,36 @@ pipeline {
                 sh '''
                     #!/bin/bash
                     set -e  # Exit immediately on error
+
                     # Install system dependencies
                     apt-get update
                     apt-get install -y wget gnupg curl unzip xvfb \
                         libnss3 libx11-6 libgconf-2-4 fonts-liberation
+
                     # Configure Chrome repository securely
                     wget -qO- https://dl.google.com/linux/linux_signing_key.pub \
                         | tee /usr/share/keyrings/google-chrome-keyring.gpg > /dev/null
                     echo "$CHROME_REPO" | tee /etc/apt/sources.list.d/google-chrome.list
+
                     # Install Chrome
                     apt-get update
                     apt-get install -y google-chrome-stable --no-install-recommends
+
                     # Get ChromeDriver version from official API
                     CHROME_VERSION=$(google-chrome-stable --version | awk '{print $3}')
                     echo "Installed Chrome version: $CHROME_VERSION"
+
                     # Parse ChromeDriver version matching Chrome
                     LATEST_CHROME_DRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json" \
                         | awk -F'"' '/"version":/ && /Stable/ {print $4; exit}')
                     echo "Using ChromeDriver version: $LATEST_CHROME_DRIVER_VERSION"
+
                     # Download and install ChromeDriver
                     wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/${LATEST_CHROME_DRIVER_VERSION}/linux-arm64/chromedriver-linux-arm64.zip"
                     unzip -o chromedriver-linux-arm64.zip -d /tmp/chromedriver
                     mv /tmp/chromedriver/chrome-for-testing/${LATEST_CHROME_DRIVER_VERSION}/linux-arm64/chromedriver /usr/local/bin/
                     chmod +x /usr/local/bin/chromedriver
+
                     # Verify installation
                     echo "ChromeDriver path: $(which chromedriver)"
                     chromedriver --version
@@ -54,9 +61,11 @@ pipeline {
                 sh '''
                     #!/bin/bash
                     set -e  # Exit on test failure
+
                     # Dynamically locate Chrome binary
                     CHROME_BIN=$(which google-chrome-stable || which google-chrome)
                     echo "Using Chrome binary at: $CHROME_BIN"
+
                     # Execute tests with explicit paths
                     mvn test -Dsurefire.suiteXmlFiles=src/test/resources/testng/runChrome.xml \
                         -Dwebdriver.chrome.driver=/usr/local/bin/chromedriver \
@@ -83,7 +92,7 @@ pipeline {
     }
     post {
         always {
-            node {
+            node('any') {  // Fix: Specify a label for the node block
                 cleanWs()
                 echo "Pipeline completed - ${currentBuild.result}"
             }
