@@ -5,11 +5,9 @@ pipeline {
             args '--platform linux/arm64/v8 --shm-size=2g'
         }
     }
-
     environment {
         CHROME_REPO = "deb [arch=arm64 signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main"
     }
-
     stages {
         stage('Checkout') {
             steps {
@@ -17,7 +15,6 @@ pipeline {
                      url: 'https://github.com/njacksonnie/SeleniumTestFX.git'
             }
         }
-
         stage('Setup Chrome & ChromeDriver') {
             steps {
                 sh '''
@@ -59,7 +56,6 @@ pipeline {
                 '''
             }
         }
-
         stage('Run Tests') {
             steps {
                 sh '''
@@ -77,7 +73,6 @@ pipeline {
                 '''
             }
         }
-
         stage('Reports') {
             parallel {
                 stage('Verify Reports') {
@@ -95,19 +90,12 @@ pipeline {
             }
         }
     }
-
     post {
         always {
             cleanWs()
             script {
                 echo "Pipeline completed - ${currentBuild.result}"
             }
-        }
-        success {
-            slackSend color: 'good', message: "Build ${env.BUILD_NUMBER} succeeded!"
-        }
-        failure {
-            slackSend color: 'danger', message: "Build ${env.BUILD_NUMBER} failed!"
         }
     }
 }
