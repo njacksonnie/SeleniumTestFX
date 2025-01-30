@@ -36,3 +36,14 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Ignore logs and screenshots
+logs/
+screenshots/
+
+# Ignore compiled files
+target/
+
+# Ignore IDE-specific files
+.idea/
+*.iml
