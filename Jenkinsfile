@@ -1,14 +1,14 @@
 pipeline {
     agent {
         docker {
-            image 'eclipse-temurin:17-jdk-jammy'  // ARM64-compatible base image
-            args '--platform linux/arm64/v8 --shm-size=2g'  // M1 settings
+            image 'eclipse-temurin:17-jdk-jammy'
+            args '--platform linux/arm64/v8 --shm-size=2g'
         }
     }
 
     environment {
         CHROME_REPO = "deb [arch=arm64] http://dl.google.com/linux/chrome/deb/ stable main"
-        LATEST_CHROME_DRIVER_VERSION = ""  // Populated dynamically
+        LATEST_CHROME_DRIVER_VERSION = ""
     }
 
     stages {
@@ -22,7 +22,7 @@ pipeline {
         stage('Setup Chrome') {
             steps {
                 sh '''
-                    # Install latest ARM Chrome
+                    # Install Chrome dependencies
                     apt-get update
                     apt-get install -y wget gnupg curl unzip xvfb \
                         libnss3 libx11-6 libgconf-2-4 fonts-liberation
@@ -35,10 +35,9 @@ pipeline {
                     apt-get update
                     apt-get install -y google-chrome-stable --no-install-recommends
 
-                    # Get ChromeDriver version matching Chrome
-                    CHROME_VERSION=$(google-chrome --version | awk '{print $3}')
+                    # Get ChromeDriver version using awk (no Perl/jq needed)
                     LATEST_CHROME_DRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json" \\
-                        | grep -oP '"version": "\K\d+\.\d+\.\d+\.\d+' | head -1)
+                        | awk -F'"' '/"version":/{print $4; exit}')
 
                     # Download and install ARM ChromeDriver
                     wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/${LATEST_CHROME_DRIVER_VERSION}/linux-arm64/chromedriver-linux-arm64.zip"
@@ -59,9 +58,9 @@ pipeline {
             }
         }
 
-        // Add your report stages here
-        stage('Verify Reports') { ... }
-        stage('Publish Reports') { ... }
+        // Add your report stages
+        stage('Verify Reports') { steps { echo 'Verify reports' } }
+        stage('Publish Reports') { steps { echo 'Publish reports' } }
     }
 
     post {
