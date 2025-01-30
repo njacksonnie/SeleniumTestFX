@@ -23,8 +23,16 @@ public class TestListener implements ITestListener {
     @Override
     public synchronized void onStart(ITestContext context) {
         Objects.requireNonNull(context, "ITestContext cannot be null.");
-        ReportManager reportManager = ReportManager.getInstance();
-        reportManager.logInfo("Test Suite Started: " + context.getName());
+
+        // Log Jenkins-specific environment variables
+        String jobName = System.getenv("JOB_NAME");
+        String buildNumber = System.getenv("BUILD_NUMBER");
+        if (jobName != null && buildNumber != null) {
+            ReportManager.getInstance().logInfo("Jenkins Job: " + jobName + ", Build Number: " + buildNumber);
+            logger.info("Jenkins Job: {}, Build Number: {}", jobName, buildNumber);
+        }
+
+        ReportManager.getInstance().logInfo("Test Suite Started: " + context.getName());
         logger.info("Test Suite Started: {}", context.getName());
     }
 
@@ -37,9 +45,8 @@ public class TestListener implements ITestListener {
     public synchronized void onTestStart(ITestResult result) {
         Objects.requireNonNull(result, "ITestResult cannot be null.");
         String testName = getTestName(result);
-        ReportManager reportManager = ReportManager.getInstance();
-        reportManager.startTest(testName);
-        reportManager.logInfo("Test Started: " + testName);
+        ReportManager.getInstance().startTest(testName);
+        ReportManager.getInstance().logInfo("Test Started: " + testName);
         logger.info("Test Started: {}", testName);
     }
 
@@ -52,8 +59,7 @@ public class TestListener implements ITestListener {
     public synchronized void onTestSuccess(ITestResult result) {
         Objects.requireNonNull(result, "ITestResult cannot be null.");
         String testName = getTestName(result);
-        ReportManager reportManager = ReportManager.getInstance();
-        reportManager.logPass("Test Passed: " + testName);
+        ReportManager.getInstance().logPass("Test Passed: " + testName);
         logger.info("Test Passed: {}", testName);
     }
 
@@ -67,12 +73,11 @@ public class TestListener implements ITestListener {
         Objects.requireNonNull(result, "ITestResult cannot be null.");
         String testName = getTestName(result);
         Throwable throwable = result.getThrowable();
-        ReportManager reportManager = ReportManager.getInstance();
 
         // Log failure details
-        reportManager.logFail("Test Failed: " + testName);
+        ReportManager.getInstance().logFail("Test Failed: " + testName);
         if (throwable != null) {
-            reportManager.logFail("Error Message: " + throwable.getMessage());
+            ReportManager.getInstance().logFail(throwable.getMessage());
             logger.error("Test Failed: {}", testName, throwable);
         }
 
@@ -81,7 +86,7 @@ public class TestListener implements ITestListener {
         if (driver != null) {
             String screenshotPath = ScreenshotUtil.captureFullPageScreenshot(driver, testName);
             if (screenshotPath != null) {
-                reportManager.logFail("Screenshot Captured: " + screenshotPath);
+                ReportManager.getInstance().logFail("Screenshot Captured: " + screenshotPath);
                 logger.info("Screenshot captured for failed test {}: {}", testName, screenshotPath);
             } else {
                 logger.warn("Failed to capture screenshot for test: {}", testName);
@@ -98,8 +103,7 @@ public class TestListener implements ITestListener {
     public synchronized void onTestSkipped(ITestResult result) {
         Objects.requireNonNull(result, "ITestResult cannot be null.");
         String testName = getTestName(result);
-        ReportManager reportManager = ReportManager.getInstance();
-        reportManager.logInfo("Test Skipped: " + testName);
+        ReportManager.getInstance().logInfo("Test Skipped: " + testName);
         logger.warn("Test Skipped: {}", testName);
     }
 
@@ -111,10 +115,17 @@ public class TestListener implements ITestListener {
     @Override
     public synchronized void onFinish(ITestContext context) {
         Objects.requireNonNull(context, "ITestContext cannot be null.");
-        ReportManager reportManager = ReportManager.getInstance();
-        reportManager.logInfo("Test Suite Finished: " + context.getName());
-        reportManager.tearDown(); // Flush ExtentReports and close log file
+        ReportManager.getInstance().logInfo("Test Suite Finished: " + context.getName());
+        ReportManager.getInstance().tearDown(); // Flush ExtentReports and close log file
         logger.info("Test Suite Finished: {}", context.getName());
+
+        // Log Jenkins-specific completion message
+        String jobName = System.getenv("JOB_NAME");
+        String buildNumber = System.getenv("BUILD_NUMBER");
+        if (jobName != null && buildNumber != null) {
+            ReportManager.getInstance().logInfo("Jenkins Job Completed: " + jobName + ", Build Number: " + buildNumber);
+            logger.info("Jenkins Job Completed: {}, Build Number: {}", jobName, buildNumber);
+        }
     }
 
     /**
