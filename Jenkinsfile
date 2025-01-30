@@ -27,8 +27,7 @@ pipeline {
                         libnss3 libx11-6 libgconf-2-4 fonts-liberation
 
                     # Configure Chrome repository securely
-                    wget -qO- https://dl.google.com/linux/linux_signing_key.pub \
-                        | tee /usr/share/keyrings/google-chrome-keyring.gpg > /dev/null
+                    wget -qO- https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor > /usr/share/keyrings/google-chrome-keyring.gpg
                     echo "$CHROME_REPO" | tee /etc/apt/sources.list.d/google-chrome.list
 
                     # Install Chrome
