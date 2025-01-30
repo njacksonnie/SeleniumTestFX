@@ -1,0 +1,19 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Main Suite" parallel="methods" thread-count="3">
+    <!-- Global parameters -->
+    <parameter name="browser" value="chrome"/>
+    <parameter name="headless" value="false"/>
+    <parameter name="baseUrl" value="https://www.amazon.in"/>
+
+    <!-- Listeners -->
+    <listeners>
+        <listener class-name="com.neuralytics.listeners.TestListener"/>
+    </listeners>
+
+    <!-- Test configuration -->
+    <test name="Regression Tests">
+        <classes>
+            <class name="com.neuralytics.tests.AmazonNavigationTest"/>
+        </classes>
+    </test>
+</suite>
