@@ -61,7 +61,7 @@ public class BaseTest {
             logger.info("Tearing down suite...");
             report.tearDown(); // Flush reports
         } catch (Exception e) {
-            logger.error("Error during suite teardown: {}", e.getMessage(), e);
+            logger.error("Error during suite tearDown: {}", e.getMessage(), e);
         }
     }
 

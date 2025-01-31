@@ -34,7 +34,7 @@ public class SeleniumWrapper {
      * @param driver WebDriver instance
      */
     public SeleniumWrapper(WebDriver driver) {
-        this(driver, Duration.ofSeconds(10)); // Default timeout
+        this(driver, Duration.ofSeconds(20)); // Default timeout
     }
 
     /**

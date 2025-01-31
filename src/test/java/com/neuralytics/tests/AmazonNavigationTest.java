@@ -1,7 +1,6 @@
 package com.neuralytics.tests;
 
 import com.neuralytics.components.AmazonNavigationBar;
-import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
