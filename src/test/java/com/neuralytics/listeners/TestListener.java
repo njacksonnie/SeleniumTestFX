@@ -8,6 +8,7 @@ import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
 import org.slf4j.Logger;
+
 import java.lang.reflect.Method;
 import java.util.Objects;
 
@@ -23,15 +24,7 @@ public class TestListener implements ITestListener {
     @Override
     public synchronized void onStart(ITestContext context) {
         Objects.requireNonNull(context, "ITestContext cannot be null.");
-
-        // Log Jenkins-specific environment variables
-        String jobName = System.getenv("JOB_NAME");
-        String buildNumber = System.getenv("BUILD_NUMBER");
-        if (jobName != null && buildNumber != null) {
-            ReportManager.getInstance().logInfo("Jenkins Job: " + jobName + ", Build Number: " + buildNumber);
-            logger.info("Jenkins Job: {}, Build Number: {}", jobName, buildNumber);
-        }
-
+        logJenkinsInfo();
         ReportManager.getInstance().logInfo("Test Suite Started: " + context.getName());
         logger.info("Test Suite Started: {}", context.getName());
     }
@@ -82,16 +75,7 @@ public class TestListener implements ITestListener {
         }
 
         // Capture Screenshot on Failure
-        WebDriver driver = getDriverFromTestInstance(result);
-        if (driver != null) {
-            String screenshotPath = ScreenshotUtil.captureFullPageScreenshot(driver, testName);
-            if (screenshotPath != null) {
-                ReportManager.getInstance().logFail("Screenshot Captured: " + screenshotPath);
-                logger.info("Screenshot captured for failed test {}: {}", testName, screenshotPath);
-            } else {
-                logger.warn("Failed to capture screenshot for test: {}", testName);
-            }
-        }
+        captureScreenshotOnFailure(result, testName);
     }
 
     /**
@@ -118,14 +102,7 @@ public class TestListener implements ITestListener {
         ReportManager.getInstance().logInfo("Test Suite Finished: " + context.getName());
         ReportManager.getInstance().tearDown(); // Flush ExtentReports and close log file
         logger.info("Test Suite Finished: {}", context.getName());
-
-        // Log Jenkins-specific completion message
-        String jobName = System.getenv("JOB_NAME");
-        String buildNumber = System.getenv("BUILD_NUMBER");
-        if (jobName != null && buildNumber != null) {
-            ReportManager.getInstance().logInfo("Jenkins Job Completed: " + jobName + ", Build Number: " + buildNumber);
-            logger.info("Jenkins Job Completed: {}, Build Number: {}", jobName, buildNumber);
-        }
+        logJenkinsInfo();
     }
 
     /**
@@ -156,5 +133,36 @@ public class TestListener implements ITestListener {
             logger.error("Failed to retrieve WebDriver instance for test: {}", getTestName(result), e);
         }
         return null;
+    }
+
+    /**
+     * Logs Jenkins-specific environment variables.
+     */
+    private void logJenkinsInfo() {
+        String jobName = System.getenv("JOB_NAME");
+        String buildNumber = System.getenv("BUILD_NUMBER");
+        if (jobName != null && buildNumber != null) {
+            ReportManager.getInstance().logInfo("Jenkins Job: " + jobName + ", Build Number: " + buildNumber);
+            logger.info("Jenkins Job: {}, Build Number: {}", jobName, buildNumber);
+        }
+    }
+
+    /**
+     * Captures a screenshot on test failure.
+     *
+     * @param result   TestNG result
+     * @param testName Name of the test
+     */
+    private void captureScreenshotOnFailure(ITestResult result, String testName) {
+        WebDriver driver = getDriverFromTestInstance(result);
+        if (driver != null) {
+            String screenshotPath = ScreenshotUtil.captureFullPageScreenshot(driver, testName);
+            if (screenshotPath != null) {
+                ReportManager.getInstance().logFail("Screenshot Captured: " + screenshotPath);
+                logger.info("Screenshot captured for failed test {}: {}", testName, screenshotPath);
+            } else {
+                logger.warn("Failed to capture screenshot for test: {}", testName);
+            }
+        }
     }
 }

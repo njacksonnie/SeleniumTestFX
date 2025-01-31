@@ -9,6 +9,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Optional;
 
 public class ReportManager {
     private static volatile ReportManager instance;
@@ -64,36 +65,15 @@ public class ReportManager {
     }
 
     public void logInfo(String message) {
-        logger.trace("Logging INFO: {}", message);
-        getCurrentTest().ifPresentOrElse(
-                test -> {
-                    test.info(message);
-                    logToFile("[INFO] " + message);
-                },
-                () -> logger.warn("Attempted to log INFO, but no active test found.")
-        );
+        logMessage(message, "INFO", ExtentTest::info);
     }
 
     public void logPass(String message) {
-        logger.trace("Logging PASS: {}", message);
-        getCurrentTest().ifPresentOrElse(
-                test -> {
-                    test.pass(message);
-                    logToFile("[PASS] " + message);
-                },
-                () -> logger.warn("Attempted to log PASS, but no active test found.")
-        );
+        logMessage(message, "PASS", ExtentTest::pass);
     }
 
     public void logFail(String message) {
-        logger.trace("Logging FAIL: {}", message);
-        getCurrentTest().ifPresentOrElse(
-                test -> {
-                    test.fail(message);
-                    logToFile("[FAIL] " + message);
-                },
-                () -> logger.warn("Attempted to log FAIL, but no active test found.")
-        );
+        logMessage(message, "FAIL", ExtentTest::fail);
     }
 
     public void endTest() {
@@ -113,9 +93,8 @@ public class ReportManager {
         closeLogFile();
     }
 
-    private java.util.Optional<ExtentTest> getCurrentTest() {
-        ExtentTest test = currentTest.get();
-        return test != null ? java.util.Optional.of(test) : java.util.Optional.empty();
+    private Optional<ExtentTest> getCurrentTest() {
+        return Optional.ofNullable(currentTest.get());
     }
 
     /**
@@ -145,5 +124,19 @@ public class ReportManager {
         } catch (IOException e) {
             logger.error("Error closing log file: {}", e.getMessage(), e);
         }
+    }
+
+    /**
+     * Log a message with the specified log level and ExtentTest method.
+     */
+    private void logMessage(String message, String level, java.util.function.BiConsumer<ExtentTest, String> logMethod) {
+        logger.trace("Logging {}: {}", level, message);
+        getCurrentTest().ifPresentOrElse(
+                test -> {
+                    logMethod.accept(test, message);
+                    logToFile("[" + level + "] " + message);
+                },
+                () -> logger.warn("Attempted to log {}, but no active test found.", level)
+        );
     }
 }

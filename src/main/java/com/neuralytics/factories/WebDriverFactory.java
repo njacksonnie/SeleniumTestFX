@@ -12,7 +12,7 @@ import org.openqa.selenium.MutableCapabilities;
 public class WebDriverFactory {
 
     public static WebDriver createDriver(String browser, boolean headless) {
-        BrowserOptionsFactory.BrowserOptionsProvider optionsProvider =
+        BrowserOptionsProvider<? extends MutableCapabilities> optionsProvider =
                 BrowserOptionsFactory.getOptionsProvider(browser);
         MutableCapabilities options = optionsProvider.getOptions(headless);
         return initializeDriver(browser, options);

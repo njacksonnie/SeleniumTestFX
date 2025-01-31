@@ -6,7 +6,7 @@ import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.edge.EdgeOptions;
 
 public class BrowserOptionsFactory {
-    public static BrowserOptionsProvider getOptionsProvider(String browser) {
+    public static BrowserOptionsProvider<? extends MutableCapabilities> getOptionsProvider(String browser) {
         return switch (browser.toLowerCase()) {
             case "chrome" -> new ChromeOptionsProvider();
             case "firefox" -> new FirefoxOptionsProvider();
@@ -15,13 +15,9 @@ public class BrowserOptionsFactory {
         };
     }
 
-    public interface BrowserOptionsProvider {
-        MutableCapabilities getOptions(boolean headless);
-    }
-
-    private static class ChromeOptionsProvider implements BrowserOptionsProvider {
+    private static class ChromeOptionsProvider implements BrowserOptionsProvider<ChromeOptions> {
         @Override
-        public MutableCapabilities getOptions(boolean headless) {
+        public ChromeOptions getOptions(boolean headless) {
             ChromeOptions options = new ChromeOptions();
             options.addArguments(
                     "--window-size=1920,1080",
@@ -34,9 +30,9 @@ public class BrowserOptionsFactory {
         }
     }
 
-    private static class FirefoxOptionsProvider implements BrowserOptionsProvider {
+    private static class FirefoxOptionsProvider implements BrowserOptionsProvider<FirefoxOptions> {
         @Override
-        public MutableCapabilities getOptions(boolean headless) {
+        public FirefoxOptions getOptions(boolean headless) {
             FirefoxOptions options = new FirefoxOptions();
             options.addArguments("--window-size=1920,1080");
             if (headless) options.addArguments("-headless");
@@ -46,9 +42,9 @@ public class BrowserOptionsFactory {
         }
     }
 
-    private static class EdgeOptionsProvider implements BrowserOptionsProvider {
+    private static class EdgeOptionsProvider implements BrowserOptionsProvider<EdgeOptions> {
         @Override
-        public MutableCapabilities getOptions(boolean headless) {
+        public EdgeOptions getOptions(boolean headless) {
             EdgeOptions options = new EdgeOptions();
             options.addArguments(
                     "--window-size=1920,1080",
