@@ -2,7 +2,7 @@
 <suite name="Main Suite" parallel="none">
     <!-- Global parameters -->
     <parameter name="browser" value="chrome"/>
-    <parameter name="headless" value="true"/>
+    <parameter name="headless" value="false"/>
     <parameter name="baseUrl" value="https://www.amazon.in"/>
 
     <!-- Listeners -->
