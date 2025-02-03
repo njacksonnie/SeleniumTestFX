@@ -1,8 +1,9 @@
-package com.neuralytics.utils;
+package com.neuralytics.factories;
 
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
+import com.neuralytics.utils.LoggerUtil;
 import org.slf4j.Logger;
 
 import java.io.FileWriter;
@@ -10,17 +11,17 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
-public class ReportManager {
-    private static volatile ReportManager instance;
+public class ReportFactory {
+    private static volatile ReportFactory instance;
     private final ExtentReports extent;
-    private static final ThreadLocal<ExtentTest> currentTest = new ThreadLocal<>();
-    private static final Logger logger = LoggerUtil.getLogger(ReportManager.class);
-
-    // FileWriter for log file
+    private static final ThreadLocal<ExtentTest> currentTest = ThreadLocal.withInitial(() -> null);
+    private static final Logger logger = LoggerUtil.getLogger(ReportFactory.class);
     private static FileWriter logFileWriter;
+    private static final Object logLock = new Object();
 
-    private ReportManager() {
+    private ReportFactory() {
         logger.trace("Initializing ExtentReports...");
         extent = new ExtentReports();
         extent.attachReporter(new ExtentSparkReporter("test-output/extent-report.html"));
@@ -28,29 +29,28 @@ public class ReportManager {
         logger.trace("ExtentReports initialized successfully.");
     }
 
-    public static ReportManager getInstance() {
+    public static ReportFactory getInstance() {
         if (instance == null) {
-            synchronized (ReportManager.class) {
+            synchronized (ReportFactory.class) {
                 if (instance == null) {
-                    logger.trace("Creating ReportManager instance...");
-                    instance = new ReportManager();
-                    logger.trace("ReportManager instance created.");
+                    logger.trace("Creating ReportFactory instance...");
+                    instance = new ReportFactory();
+                    logger.trace("ReportFactory instance created.");
                 }
             }
         }
         return instance;
     }
 
-    /**
-     * Initialize the log file writer.
-     */
     private void initializeLogFile() {
         try {
             String logFilePath = "logs/test-execution.log";
-            logFileWriter = new FileWriter(logFilePath, true); // Append mode
-            logFileWriter.write("\n--- Test Execution Log ---\n");
-            logFileWriter.write("Start Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "\n");
-            logger.trace("Log file initialized at: logs/test-execution.log");
+            synchronized (logLock) {
+                logFileWriter = new FileWriter(logFilePath, true);
+                logToFile("--- Test Execution Log ---");
+                logToFile("Start Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                logger.trace("Log file initialized at: {}", logFilePath);
+            }
         } catch (IOException e) {
             logger.error("Error initializing log file: {}", e.getMessage(), e);
         }
@@ -83,7 +83,7 @@ public class ReportManager {
         logger.trace("Test ended successfully.");
     }
 
-    public void tearDown() {
+    public synchronized void tearDown() {
         logger.trace("Flushing ExtentReports...");
         if (extent != null) {
             extent.flush();
@@ -97,13 +97,11 @@ public class ReportManager {
         return Optional.ofNullable(currentTest.get());
     }
 
-    /**
-     * Write a message to the log file.
-     */
-    private void logToFile(String message) {
+    private synchronized void logToFile(String message) {
         try {
             if (logFileWriter != null) {
-                logFileWriter.write(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + " - " + message + "\n");
+                String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+                logFileWriter.write(timestamp + " - " + message + "\n");
                 logFileWriter.flush();
             }
         } catch (IOException e) {
@@ -111,14 +109,12 @@ public class ReportManager {
         }
     }
 
-    /**
-     * Close the log file writer.
-     */
-    private void closeLogFile() {
+    private synchronized void closeLogFile() {
         try {
             if (logFileWriter != null) {
                 logFileWriter.write("End Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "\n");
                 logFileWriter.close();
+                logFileWriter = null; // Prevent reuse after closing
                 logger.trace("Log file closed successfully.");
             }
         } catch (IOException e) {
@@ -126,17 +122,14 @@ public class ReportManager {
         }
     }
 
-    /**
-     * Log a message with the specified log level and ExtentTest method.
-     */
-    private void logMessage(String message, String level, java.util.function.BiConsumer<ExtentTest, String> logMethod) {
+    private void logMessage(String message, String level, BiConsumer<ExtentTest, String> logMethod) {
         logger.trace("Logging {}: {}", level, message);
         getCurrentTest().ifPresentOrElse(
                 test -> {
                     logMethod.accept(test, message);
                     logToFile("[" + level + "] " + message);
                 },
-                () -> logger.warn("Attempted to log {}, but no active test found.", level)
+                () -> logger.warn("Attempted to log {} but no active test found.", level)
         );
     }
 }
