@@ -1,5 +1,6 @@
-package com.neuralytics.utils;
+package com.neuralytics.factories;
 
+import com.neuralytics.utils.LoggerUtil;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
@@ -13,12 +14,18 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
 
-public class ScreenshotUtil {
+public class ScreenshotFactory {
 
-    private static final Logger logger = LoggerUtil.getLogger(ScreenshotUtil.class);
+    private static final Logger logger = LoggerUtil.getLogger(ScreenshotFactory.class);
     private static final String SCREENSHOT_DIR = "./screenshots/";
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
+    // Private constructor to prevent instantiation.
+    private ScreenshotFactory() {
+        throw new UnsupportedOperationException("Utility class cannot be instantiated.");
+    }
+
+    // Static initializer to ensure the screenshot directory exists.
     static {
         try {
             createScreenshotDirectory();
@@ -27,12 +34,8 @@ public class ScreenshotUtil {
         }
     }
 
-    private ScreenshotUtil() {
-        throw new UnsupportedOperationException("Utility class cannot be instantiated.");
-    }
-
     /**
-     * Creates the screenshot directory if it doesn't exist with enhanced logging
+     * Creates the screenshot directory if it does not exist.
      */
     private static void createScreenshotDirectory() {
         File directory = new File(SCREENSHOT_DIR);
@@ -46,15 +49,16 @@ public class ScreenshotUtil {
         if (directory.mkdirs()) {
             logger.info("Created screenshot directory at: {}", directory.getAbsolutePath());
         } else {
-            logger.error("FAILED to create screenshot directory at: {}", directory.getAbsolutePath());
+            logger.error("Failed to create screenshot directory at: {}", directory.getAbsolutePath());
         }
     }
 
     /**
-     * Captures a full-page screenshot using WebDriver
-     * @param driver    WebDriver instance
-     * @param testName  Name of the test for screenshot naming
-     * @return          Absolute path of the saved screenshot, or null if failed
+     * Captures a full-page screenshot using the provided WebDriver instance.
+     *
+     * @param driver   WebDriver instance.
+     * @param testName Name of the test (used for naming the screenshot file).
+     * @return Absolute path of the saved screenshot, or null if capture failed.
      */
     public static String captureFullPageScreenshot(WebDriver driver, String testName) {
         Objects.requireNonNull(driver, "WebDriver cannot be null.");
@@ -67,21 +71,22 @@ public class ScreenshotUtil {
             }
 
             File screenshotFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-            return saveScreenshot(screenshotFile, testName, "fullpage");
+            return saveScreenshot(screenshotFile, testName, "fullPage");
         } catch (Exception e) {
-            String errorMessage = String.format("Failed to capture full page screenshot for test '%s': %s",
+            String errorMessage = String.format("Failed to capture full-page screenshot for test '%s': %s",
                     testName, e.getMessage());
             logger.error(errorMessage, e);
-            ReportManager.getInstance().logFail(errorMessage);
+            ReportFactory.getInstance().logFail(errorMessage);
             return null;
         }
     }
 
     /**
-     * Captures a screenshot of a specific WebElement
-     * @param element   WebElement to capture
-     * @param testName  Name of the test for screenshot naming
-     * @return          Absolute path of the saved screenshot, or null if failed
+     * Captures a screenshot of a specific WebElement.
+     *
+     * @param element  WebElement to capture.
+     * @param testName Name of the test (used for naming the screenshot file).
+     * @return Absolute path of the saved screenshot, or null if capture failed.
      */
     public static String captureElementScreenshot(WebElement element, String testName) {
         Objects.requireNonNull(element, "WebElement cannot be null.");
@@ -94,13 +99,19 @@ public class ScreenshotUtil {
             String errorMessage = String.format("Failed to capture element screenshot for test '%s': %s",
                     testName, e.getMessage());
             logger.error(errorMessage, e);
-            ReportManager.getInstance().logFail(errorMessage);
+            ReportFactory.getInstance().logFail(errorMessage);
             return null;
         }
     }
 
     /**
-     * Enhanced save method with redundant directory checks and better path handling
+     * Saves the screenshot file to the designated directory.
+     * This method is synchronized to ensure that concurrent file writes do not conflict.
+     *
+     * @param screenshotFile The temporary screenshot file.
+     * @param testName       Name of the test.
+     * @param type           The type of screenshot (e.g., "fullpage", "element").
+     * @return Absolute path of the saved screenshot, or null if saving fails.
      */
     private static synchronized String saveScreenshot(File screenshotFile, String testName, String type) {
         Objects.requireNonNull(screenshotFile, "Screenshot file cannot be null.");
@@ -108,7 +119,7 @@ public class ScreenshotUtil {
         Objects.requireNonNull(type, "Screenshot type cannot be null.");
 
         try {
-            // Re-check directory existence before saving
+            // Ensure the screenshot directory exists before saving.
             createScreenshotDirectory();
 
             String timestamp = DATE_FORMAT.format(new Date());
@@ -124,7 +135,7 @@ public class ScreenshotUtil {
         } catch (IOException e) {
             String errorMessage = String.format("Failed to save screenshot for test '%s': %s", testName, e.getMessage());
             logger.error(errorMessage, e);
-            ReportManager.getInstance().logFail(errorMessage);
+            ReportFactory.getInstance().logFail(errorMessage);
             return null;
         }
     }

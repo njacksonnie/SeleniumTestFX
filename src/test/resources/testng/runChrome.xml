@@ -13,7 +13,7 @@
     <!-- Test configuration -->
     <test name="Regression Tests">
         <classes>
-            <class name="com.neuralytics.tests.AmazonNavigationTest"/>
+            <class name="com.neuralytics.tests.AmazonHomePageTest"/>
         </classes>
     </test>
 </suite>
