@@ -10,7 +10,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 
 public class ReportFactory {
@@ -25,7 +24,7 @@ public class ReportFactory {
         logger.trace("Initializing ExtentReports...");
         extent = new ExtentReports();
         extent.attachReporter(new ExtentSparkReporter("test-output/extent-report.html"));
-        initializeLogFile();
+        // initializeLogFile(); // Moved to BaseTest
         logger.trace("ExtentReports initialized successfully.");
     }
 
@@ -42,7 +41,7 @@ public class ReportFactory {
         return instance;
     }
 
-    private void initializeLogFile() {
+    public void initializeLogFile() {
         try {
             String logFilePath = "logs/test-execution.log";
             synchronized (logLock) {
@@ -93,8 +92,9 @@ public class ReportFactory {
         closeLogFile();
     }
 
-    private Optional<ExtentTest> getCurrentTest() {
-        return Optional.ofNullable(currentTest.get());
+    // Simplified getCurrentTest - no need for Optional
+    private ExtentTest getCurrentTest() {
+        return currentTest.get();
     }
 
     private synchronized void logToFile(String message) {
@@ -112,7 +112,8 @@ public class ReportFactory {
     private synchronized void closeLogFile() {
         try {
             if (logFileWriter != null) {
-                logFileWriter.write("End Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "\n");
+                logFileWriter
+                        .write("End Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "\n");
                 logFileWriter.close();
                 logFileWriter = null; // Prevent reuse after closing
                 logger.trace("Log file closed successfully.");
@@ -124,12 +125,12 @@ public class ReportFactory {
 
     private void logMessage(String message, String level, BiConsumer<ExtentTest, String> logMethod) {
         logger.trace("Logging {}: {}", level, message);
-        getCurrentTest().ifPresentOrElse(
-                test -> {
-                    logMethod.accept(test, message);
-                    logToFile("[" + level + "] " + message);
-                },
-                () -> logger.warn("Attempted to log {} but no active test found.", level)
-        );
+        ExtentTest test = getCurrentTest();
+        if (test != null) {
+            logMethod.accept(test, message);
+            logToFile("[" + level + "] " + message);
+        } else {
+            logger.warn("Attempted to log {} but no active test found.", level);
+        }
     }
 }

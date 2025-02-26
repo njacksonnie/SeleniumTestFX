@@ -2,8 +2,6 @@ package com.neuralytics.providers;
 
 import java.util.Properties;
 import org.openqa.selenium.MutableCapabilities;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.edge.EdgeOptions;
 import com.neuralytics.interfaces.BrowserOptionsProvider;
 
@@ -30,8 +28,4 @@ public class EdgeOptionsProvider implements BrowserOptionsProvider {
         return options;
     }
 
-    @Override
-    public WebDriver createDriver() {
-        return new EdgeDriver((EdgeOptions) getOptions());
-    }
 }

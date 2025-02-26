@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import org.openqa.selenium.MutableCapabilities;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import com.neuralytics.interfaces.BrowserOptionsProvider;
 
@@ -33,13 +31,13 @@ public class ChromeOptionsProvider implements BrowserOptionsProvider {
         if (Boolean.parseBoolean(prop.getProperty("remote"))) {
             options.setCapability("browserName", "chrome");
             options.setBrowserVersion(prop.getProperty("browser_version", "latest"));
-            options.setCapability("selenoid:options", getSelenoidOptions());
+            options.setCapability("selenoid:options", getSelenoidIdOptions());
         }
 
         return options;
     }
 
-    private Map<String, Object> getSelenoidOptions() {
+    private Map<String, Object> getSelenoidIdOptions() {
         Map<String, Object> selenoidOptions = new HashMap<>();
         selenoidOptions.put("screenResolution", "1280x1024x24");
         selenoidOptions.put("enableVNC", true);
@@ -47,8 +45,4 @@ public class ChromeOptionsProvider implements BrowserOptionsProvider {
         return selenoidOptions;
     }
 
-    @Override
-    public WebDriver createDriver() {
-        return new ChromeDriver((ChromeOptions) getOptions());
-    }
 }

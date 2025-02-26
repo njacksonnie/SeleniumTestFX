@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import org.openqa.selenium.MutableCapabilities;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import com.neuralytics.interfaces.BrowserOptionsProvider;
 
@@ -45,8 +43,4 @@ public class FirefoxOptionsProvider implements BrowserOptionsProvider {
         return selenoidOptions;
     }
 
-    @Override
-    public WebDriver createDriver() {
-        return new FirefoxDriver((FirefoxOptions) getOptions());
-    }
 }
