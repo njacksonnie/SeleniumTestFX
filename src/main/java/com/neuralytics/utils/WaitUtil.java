@@ -7,13 +7,50 @@ import org.slf4j.Logger;
 import java.time.Duration;
 import java.util.List;
 
+/**
+ * A utility class for managing explicit waits in Selenium WebDriver.
+ * Provides methods to wait for various conditions such as element presence,
+ * visibility, clickability,
+ * page titles, URLs, alerts, frames, and window counts. Utilizes
+ * {@link WebDriverWait} for standard waits
+ * and {@link FluentWait} for customizable polling intervals, ensuring robust
+ * synchronization in a
+ * testing framework.
+ *
+ * <p>
+ * Usage example:
+ * 
+ * <pre>
+ * WebDriver driver = DriverFactory.getDriver();
+ * WebElement element = WaitUtil.waitForElementVisible(driver, By.id("loginButton"), 10);
+ * WaitUtil.clickWhenReady(driver, By.id("submit"), 5);
+ * String title = WaitUtil.waitForTitleContains(driver, "Dashboard", 10);
+ * </pre>
+ *
+ * <p>
+ * All methods use timeouts specified in seconds and log their outcomes for
+ * debugging purposes.
+ *
+ * @see WebDriverWait
+ * @see FluentWait
+ * @see ExpectedConditions
+ */
 public class WaitUtil {
 
+    /**
+     * Logger instance for tracing wait operations and logging errors.
+     */
     private static final Logger logger = LoggerUtil.getLogger(WaitUtil.class);
 
     /**
-     * An expectation for checking that an element is present on the DOM of a page.
-     * This does not necessarily mean that the element is visible.
+     * Waits for an element to be present in the DOM of a page.
+     * Presence indicates the element exists in the DOM, but it may not be visible.
+     *
+     * @param driver  the WebDriver instance to use
+     * @param locator the locator of the target element
+     * @param timeOut the maximum time to wait (in seconds)
+     * @return the found {@link WebElement}
+     * @throws TimeoutException if the element is not present within the timeout
      */
     public static WebElement waitForElementPresence(WebDriver driver, By locator, int timeOut) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
@@ -23,9 +60,15 @@ public class WaitUtil {
     }
 
     /**
-     * An expectation for checking that an element is present on the DOM of a page
-     * and visible. Visibility means that the element is not only displayed but also
-     * has a height and width that is greater than 0.
+     * Waits for an element to be present in the DOM and visible on the page.
+     * Visibility requires the element to be displayed with a height and width
+     * greater than 0.
+     *
+     * @param driver  the WebDriver instance to use
+     * @param locator the locator of the target element
+     * @param timeOut the maximum time to wait (in seconds)
+     * @return the visible {@link WebElement}
+     * @throws TimeoutException if the element is not visible within the timeout
      */
     public static WebElement waitForElementVisible(WebDriver driver, By locator, int timeOut) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
@@ -34,6 +77,19 @@ public class WaitUtil {
         return element;
     }
 
+    /**
+     * Waits for an element to be visible with custom polling using
+     * {@link FluentWait}.
+     * Polls at the specified interval, ignoring {@link NoSuchElementException}
+     * during the wait.
+     *
+     * @param driver       the WebDriver instance to use
+     * @param locator      the locator of the target element
+     * @param timeOut      the maximum time to wait (in seconds)
+     * @param intervalTime the polling interval (in seconds)
+     * @return the visible {@link WebElement}
+     * @throws TimeoutException if the element is not visible within the timeout
+     */
     public static WebElement waitForElementVisible(WebDriver driver, By locator, int timeOut, int intervalTime) {
         Wait<WebDriver> wait = new FluentWait<>(driver)
                 .withTimeout(Duration.ofSeconds(timeOut))
@@ -48,8 +104,13 @@ public class WaitUtil {
     }
 
     /**
-     * An expectation for checking that there is at least one element present on a
-     * web page.
+     * Waits for at least one element matching the locator to be present in the DOM.
+     *
+     * @param driver  the WebDriver instance to use
+     * @param locator the locator of the target elements
+     * @param timeOut the maximum time to wait (in seconds)
+     * @return a list of present {@link WebElement} instances
+     * @throws TimeoutException if no elements are present within the timeout
      */
     public static List<WebElement> waitForPresenceOfElementsLocated(WebDriver driver, By locator, int timeOut) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
@@ -59,9 +120,17 @@ public class WaitUtil {
     }
 
     /**
-     * An expectation for checking that all elements present on the web page that
-     * match the locator are visible. Visibility means that the elements are not
-     * only displayed but also have a height and width that is greater than 0.
+     * Waits for all elements matching the locator to be visible on the page.
+     * Visibility requires all elements to be displayed with a height and width
+     * greater than 0.
+     * Returns an empty list if no elements are found within the timeout,
+     * suppressing exceptions.
+     *
+     * @param driver  the WebDriver instance to use
+     * @param locator the locator of the target elements
+     * @param timeOut the maximum time to wait (in seconds)
+     * @return a list of visible {@link WebElement} instances, or an empty list if
+     *         none are found
      */
     public static List<WebElement> waitForVisibilityOfElementsLocated(WebDriver driver, By locator, int timeOut) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
@@ -71,13 +140,19 @@ public class WaitUtil {
             return elements;
         } catch (Exception e) {
             logger.warn("No elements found for visibility check: {}", locator);
-            return List.of(); // return empty arraylist
+            return List.of();
         }
     }
 
     /**
-     * An expectation for checking an element is visible and enabled such that you
-     * can click it.
+     * Waits for an element to be visible and clickable, then clicks it.
+     * Ensures the element is both displayed and enabled before performing the
+     * click.
+     *
+     * @param driver  the WebDriver instance to use
+     * @param locator the locator of the target element
+     * @param timeOut the maximum time to wait (in seconds)
+     * @throws TimeoutException if the element is not clickable within the timeout
      */
     public static void clickWhenReady(WebDriver driver, By locator, int timeOut) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
@@ -85,6 +160,16 @@ public class WaitUtil {
         logger.info("Waited for element to be clickable and clicked: {}", locator);
     }
 
+    /**
+     * Waits for the page title to contain the specified fraction.
+     * Returns the current title even if the condition times out, logging an error
+     * in that case.
+     *
+     * @param driver        the WebDriver instance to use
+     * @param titleFraction the partial title text to wait for
+     * @param timeOut       the maximum time to wait (in seconds)
+     * @return the current page title
+     */
     public static String waitForTitleContains(WebDriver driver, String titleFraction, int timeOut) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
         String title = null;
@@ -95,11 +180,21 @@ public class WaitUtil {
             }
         } catch (TimeoutException e) {
             logger.error("Title not found containing '{}'", titleFraction);
-            title = driver.getTitle(); // Still return the current title
+            title = driver.getTitle();
         }
         return title;
     }
 
+    /**
+     * Waits for the page title to exactly match the specified value.
+     * Returns the current title even if the condition times out, logging an error
+     * in that case.
+     *
+     * @param driver   the WebDriver instance to use
+     * @param titleVal the exact title text to wait for
+     * @param timeOut  the maximum time to wait (in seconds)
+     * @return the current page title
+     */
     public static String waitForTitleToBe(WebDriver driver, String titleVal, int timeOut) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
         String title = null;
@@ -110,12 +205,21 @@ public class WaitUtil {
             }
         } catch (TimeoutException e) {
             logger.error("Title not found: '{}'", titleVal);
-            title = driver.getTitle(); // Still return the current title
-
+            title = driver.getTitle();
         }
         return title;
     }
 
+    /**
+     * Waits for the page URL to contain the specified fraction.
+     * Returns the current URL even if the condition times out, logging an error in
+     * that case.
+     *
+     * @param driver      the WebDriver instance to use
+     * @param urlFraction the partial URL text to wait for
+     * @param timeOut     the maximum time to wait (in seconds)
+     * @return the current page URL
+     */
     public static String waitForURLContains(WebDriver driver, String urlFraction, int timeOut) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
         String url = null;
@@ -131,6 +235,16 @@ public class WaitUtil {
         return url;
     }
 
+    /**
+     * Waits for the page URL to exactly match the specified value.
+     * Returns the current URL even if the condition times out, logging an error in
+     * that case.
+     *
+     * @param driver   the WebDriver instance to use
+     * @param urlValue the exact URL to wait for
+     * @param timeOut  the maximum time to wait (in seconds)
+     * @return the current page URL
+     */
     public static String waitForURLToBe(WebDriver driver, String urlValue, int timeOut) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
         String url = null;
@@ -146,6 +260,14 @@ public class WaitUtil {
         return url;
     }
 
+    /**
+     * Waits for a JavaScript alert to be present using {@link WebDriverWait}.
+     *
+     * @param driver  the WebDriver instance to use
+     * @param timeOut the maximum time to wait (in seconds)
+     * @return the present {@link Alert}
+     * @throws TimeoutException if the alert is not present within the timeout
+     */
     public static Alert waitForJSAlert(WebDriver driver, int timeOut) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
         Alert alert = wait.until(ExpectedConditions.alertIsPresent());
@@ -153,6 +275,18 @@ public class WaitUtil {
         return alert;
     }
 
+    /**
+     * Waits for a JavaScript alert to be present with custom polling using
+     * {@link FluentWait}.
+     * Polls at the specified interval, ignoring {@link NoAlertPresentException}
+     * during the wait.
+     *
+     * @param driver       the WebDriver instance to use
+     * @param timeOut      the maximum time to wait (in seconds)
+     * @param intervalTime the polling interval (in seconds)
+     * @return the present {@link Alert}
+     * @throws TimeoutException if the alert is not present within the timeout
+     */
     public static Alert waitForJSAlert(WebDriver driver, int timeOut, int intervalTime) {
         Wait<WebDriver> wait = new FluentWait<>(driver)
                 .withTimeout(Duration.ofSeconds(timeOut))
@@ -164,6 +298,14 @@ public class WaitUtil {
         return alert;
     }
 
+    /**
+     * Waits for a JavaScript alert and retrieves its text, then accepts it.
+     *
+     * @param driver  the WebDriver instance to use
+     * @param timeOut the maximum time to wait (in seconds)
+     * @return the text of the alert
+     * @throws TimeoutException if the alert is not present within the timeout
+     */
     public static String getAlertText(WebDriver driver, int timeOut) {
         Alert alert = waitForJSAlert(driver, timeOut);
         String text = alert.getText();
@@ -172,16 +314,39 @@ public class WaitUtil {
         return text;
     }
 
+    /**
+     * Waits for a JavaScript alert and accepts it.
+     *
+     * @param driver  the WebDriver instance to use
+     * @param timeOut the maximum time to wait (in seconds)
+     * @throws TimeoutException if the alert is not present within the timeout
+     */
     public static void acceptAlert(WebDriver driver, int timeOut) {
         waitForJSAlert(driver, timeOut).accept();
         logger.info("Accepted JS alert");
     }
 
+    /**
+     * Waits for a JavaScript alert and dismisses it.
+     *
+     * @param driver  the WebDriver instance to use
+     * @param timeOut the maximum time to wait (in seconds)
+     * @throws TimeoutException if the alert is not present within the timeout
+     */
     public static void dismissAlert(WebDriver driver, int timeOut) {
         waitForJSAlert(driver, timeOut).dismiss();
         logger.info("Dismissed JS alert");
     }
 
+    /**
+     * Waits for a JavaScript alert, sends keys to it, and accepts it.
+     * Useful for prompt-style alerts requiring input.
+     *
+     * @param driver  the WebDriver instance to use
+     * @param timeOut the maximum time to wait (in seconds)
+     * @param value   the value to send to the alert
+     * @throws TimeoutException if the alert is not present within the timeout
+     */
     public static void alertSendKeys(WebDriver driver, int timeOut, String value) {
         Alert alert = waitForJSAlert(driver, timeOut);
         alert.sendKeys(value);
@@ -189,12 +354,32 @@ public class WaitUtil {
         logger.info("Sent keys to JS alert: {}", value);
     }
 
+    /**
+     * Waits for a frame to be available and switches to it using a locator.
+     *
+     * @param driver       the WebDriver instance to use
+     * @param frameLocator the locator of the target frame
+     * @param timeOut      the maximum time to wait (in seconds)
+     * @throws TimeoutException if the frame is not available within the timeout
+     */
     public static void waitForFrameByLocator(WebDriver driver, By frameLocator, int timeOut) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
         wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(frameLocator));
         logger.info("Waited for frame by locator: {}", frameLocator);
     }
 
+    /**
+     * Waits for a frame to be available and switches to it with custom polling
+     * using a locator.
+     * Polls at the specified interval, ignoring {@link NoSuchFrameException} during
+     * the wait.
+     *
+     * @param driver       the WebDriver instance to use
+     * @param frameLocator the locator of the target frame
+     * @param timeOut      the maximum time to wait (in seconds)
+     * @param intervalTime the polling interval (in seconds)
+     * @throws TimeoutException if the frame is not available within the timeout
+     */
     public static void waitForFrameByLocator(WebDriver driver, By frameLocator, int timeOut, int intervalTime) {
         Wait<WebDriver> wait = new FluentWait<>(driver)
                 .withTimeout(Duration.ofSeconds(timeOut))
@@ -207,24 +392,58 @@ public class WaitUtil {
                 frameLocator);
     }
 
+    /**
+     * Waits for a frame to be available and switches to it using an index.
+     *
+     * @param driver     the WebDriver instance to use
+     * @param frameIndex the index of the target frame (zero-based)
+     * @param timeOut    the maximum time to wait (in seconds)
+     * @throws TimeoutException if the frame is not available within the timeout
+     */
     public static void waitForFrameByIndex(WebDriver driver, int frameIndex, int timeOut) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
         wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(frameIndex));
         logger.info("Waited for frame by index: {}", frameIndex);
     }
 
+    /**
+     * Waits for a frame to be available and switches to it using an ID or name.
+     *
+     * @param driver        the WebDriver instance to use
+     * @param frameIDOrName the ID or name of the target frame
+     * @param timeOut       the maximum time to wait (in seconds)
+     * @throws TimeoutException if the frame is not available within the timeout
+     */
     public static void waitForFrameByIndex(WebDriver driver, String frameIDOrName, int timeOut) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
         wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(frameIDOrName));
         logger.info("Waited for frame by ID or name: {}", frameIDOrName);
     }
 
+    /**
+     * Waits for a frame to be available and switches to it using a frame element.
+     *
+     * @param driver       the WebDriver instance to use
+     * @param frameElement the {@link WebElement} representing the target frame
+     * @param timeOut      the maximum time to wait (in seconds)
+     * @throws TimeoutException if the frame is not available within the timeout
+     */
     public static void waitForFrameByIndex(WebDriver driver, WebElement frameElement, int timeOut) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
         wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(frameElement));
         logger.info("Waited for frame by element: {}", frameElement);
     }
 
+    /**
+     * Waits for the number of browser windows to match the specified total.
+     *
+     * @param driver       the WebDriver instance to use
+     * @param totalWindows the expected number of windows
+     * @param timeOut      the maximum time to wait (in seconds)
+     * @return true if the number of windows matches within the timeout, false
+     *         otherwise
+     * @throws TimeoutException if the condition is not met within the timeout
+     */
     public static boolean waitForWindowsToBe(WebDriver driver, int totalWindows, int timeOut) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
         boolean result = wait.until(ExpectedConditions.numberOfWindowsToBe(totalWindows));
@@ -232,6 +451,16 @@ public class WaitUtil {
         return result;
     }
 
+    /**
+     * Waits for the page to be fully loaded by checking the document.readyState via
+     * JavaScript.
+     * Throws an exception if the page does not load within the timeout.
+     *
+     * @param driver  the WebDriver instance to use
+     * @param timeOut the maximum time to wait (in seconds)
+     * @throws RuntimeException if the page does not load completely within the
+     *                          timeout
+     */
     public static void isPageLoaded(WebDriver driver, int timeOut) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
         String flag = wait.until(ExpectedConditions.jsReturnsValue("return document.readyState === 'complete'"))
