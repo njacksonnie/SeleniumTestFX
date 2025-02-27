@@ -12,7 +12,7 @@ import org.testng.annotations.*;
 import java.util.Objects;
 
 /**
- * A base class for TestNG tests providing WebDriver setup, teardown, and
+ * A base class for TestNG tests providing WebDriver setup, tearDown, and
  * reporting integration.
  * Manages the test lifecycle at suite, class, and method levels, initializing
  * the WebDriver via
@@ -22,22 +22,6 @@ import java.util.Objects;
  * {@code @Listeners} to integrate with
  * {@link com.neuralytics.listeners.TestListener} for event logging and
  * screenshot capture.
- *
- * <p>
- * Subclasses should extend this class to inherit standardized setup and
- * teardown behavior:
- * 
- * <pre>
- * public class MyTest extends BaseTest {
- *     @Test
- *     public void testExample() {
- *         driver.get("https://example.com");
- *         // Test logic here
- *     }
- * }
- * </pre>
- *
- * <p>
  * The WebDriver is preserved on test failure to allow screenshot capture by the
  * listener, and
  * configuration is loaded from properties defined in {@link ConfigLoader}.
@@ -88,7 +72,7 @@ public class BaseTest {
     @AfterSuite(alwaysRun = true)
     public void tearDownSuite() {
         ReportFactory.getInstance().tearDown();
-        logger.info("Test Suite Teardown Completed.");
+        logger.info("Test Suite TearDown Completed.");
     }
 
     /**
@@ -106,7 +90,7 @@ public class BaseTest {
      */
     @AfterClass(alwaysRun = true)
     public void tearDownClass() {
-        logger.info("Test Class Teardown Completed.");
+        logger.info("Test Class TearDown Completed.");
     }
 
     /**
@@ -157,7 +141,7 @@ public class BaseTest {
                 DriverFactory.quitDriver();
             }
         } catch (Exception e) {
-            logger.error("Error during test teardown for: {}", testName, e);
+            logger.error("Error during test tearDown for: {}", testName, e);
         } finally {
             ReportFactory.getInstance().endTest();
             logger.info("Test TearDown Completed for: {}", testName);

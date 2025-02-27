@@ -1,4 +1,4 @@
-package com.neuralytics.interfaces;
+package com.neuralytics.providers;
 
 import org.openqa.selenium.MutableCapabilities;
 

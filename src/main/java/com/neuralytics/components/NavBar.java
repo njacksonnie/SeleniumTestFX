@@ -1,7 +1,7 @@
 package com.neuralytics.components;
 
-import com.neuralytics.utils.ElementUtil;
-import com.neuralytics.utils.JavaScriptUtil;
+import com.neuralytics.utils.element.ElementUtil;
+import com.neuralytics.utils.element.JavaScriptUtil;
 import com.neuralytics.utils.LoggerUtil;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;

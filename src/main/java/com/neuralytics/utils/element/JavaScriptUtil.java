@@ -1,4 +1,4 @@
-package com.neuralytics.utils;
+package com.neuralytics.utils.element;
 
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
@@ -130,8 +130,7 @@ public class JavaScriptUtil {
 
     /**
      * Generates a JavaScript alert with the specified message.
-     * The alert must be handled separately (e.g., via WebDriver’s {@link Alert}
-     * interface).
+     * The alert must be handled separately.
      *
      * @param message the message to display in the alert
      */

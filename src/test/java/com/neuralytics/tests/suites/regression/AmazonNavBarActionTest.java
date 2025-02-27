@@ -1,8 +1,8 @@
-package com.neuralytics.tests;
+package com.neuralytics.tests.suites.regression;
 
 import com.neuralytics.components.NavBar;
 import com.neuralytics.factories.ReportFactory;
-import org.testng.Assert;
+import com.neuralytics.tests.BaseTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
