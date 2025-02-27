@@ -1,6 +1,5 @@
 package com.neuralytics.providers;
 
-import com.neuralytics.interfaces.BrowserOptionsProvider;
 import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.firefox.FirefoxOptions;
 

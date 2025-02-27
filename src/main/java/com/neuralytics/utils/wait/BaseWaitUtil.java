@@ -1,5 +1,7 @@
-package com.neuralytics.utils;
+package com.neuralytics.utils.wait;
 
+import com.neuralytics.exceptions.WaitTimeoutException;
+import com.neuralytics.utils.LoggerUtil;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.FluentWait;

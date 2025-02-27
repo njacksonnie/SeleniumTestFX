@@ -1,4 +1,4 @@
-package com.neuralytics.utils;
+package com.neuralytics.utils.element;
 
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;

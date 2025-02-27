@@ -1,5 +1,6 @@
-package com.neuralytics.utils;
+package com.neuralytics.utils.wait;
 
+import com.neuralytics.utils.LoggerUtil;
 import org.openqa.selenium.Alert;
 import org.openqa.selenium.NoAlertPresentException;
 import org.openqa.selenium.WebDriver;

@@ -1,7 +1,10 @@
-package com.neuralytics.utils;
+package com.neuralytics.utils.element;
 
 import com.neuralytics.exceptions.ElementException;
 import com.neuralytics.exceptions.FrameworkException;
+import com.neuralytics.utils.LoggerUtil;
+import com.neuralytics.utils.wait.ElementWaitUtil;
+import com.neuralytics.utils.wait.NavigationWaitUtil;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.Select;
@@ -20,18 +23,6 @@ import java.util.List;
  * in a Selenium-based
  * testing framework, with built-in logging and exception handling.
  *
- * <p>
- * Usage example:
- * 
- * <pre>
- * WebDriver driver = DriverFactory.getDriver();
- * ElementUtil elementUtil = new ElementUtil(driver);
- * elementUtil.doSendKeys(By.id("username"), "testuser");
- * elementUtil.doClick(By.id("loginButton"));
- * String text = elementUtil.doGetText(By.id("welcomeMessage"));
- * </pre>
- *
- * <p>
  * All methods operate on elements identified by {@link By} locators and throw
  * {@link ElementException}
  * if elements are not found, ensuring robust error handling.

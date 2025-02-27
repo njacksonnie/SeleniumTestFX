@@ -1,4 +1,4 @@
-package com.neuralytics.utils;
+package com.neuralytics.exceptions;
 
 /**
  * Custom exception thrown when a wait condition is not met within the specified timeout.
