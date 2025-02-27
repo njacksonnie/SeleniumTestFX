@@ -1,54 +1,237 @@
 package com.neuralytics.providers;
 
+import com.neuralytics.interfaces.BrowserOptionsProvider;
+import org.openqa.selenium.MutableCapabilities;
+import org.openqa.selenium.chrome.ChromeOptions;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import org.openqa.selenium.MutableCapabilities;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import com.neuralytics.interfaces.BrowserOptionsProvider;
 
+/**
+ * Provides Chrome-specific options for Selenium WebDriver configuration.
+ * Implements {@link BrowserOptionsProvider} to supply a configured
+ * {@link ChromeOptions} instance
+ * based on properties, supporting basic settings (e.g., headless mode),
+ * advanced features (e.g., mobile
+ * emulation), and remote execution capabilities (e.g., Selenoid integration).
+ * This class is typically
+ * used with a factory or manager (e.g., {@code OptionsManager}) to initialize
+ * Chrome WebDriver instances.
+ *
+ * <p>
+ * Configuration is driven by a {@link Properties} object, with keys such as:
+ * <ul>
+ * <li>{@code headless}: Enables headless mode (e.g., "true").</li>
+ * <li>{@code advanced_mode}: Enables advanced options (e.g., "true").</li>
+ * <li>{@code remote}: Triggers remote-specific settings (e.g., "true").</li>
+ * <li>{@code mobile_emulation}: Specifies a device name for emulation (e.g.,
+ * "Pixel 2").</li>
+ * </ul>
+ *
+ * <p>
+ * Usage example:
+ * 
+ * <pre>
+ * Properties props = new Properties();
+ * props.setProperty("headless", "true");
+ * ChromeOptionsProvider provider = new ChromeOptionsProvider(props);
+ * MutableCapabilities options = provider.getOptions();
+ * </pre>
+ *
+ * @see BrowserOptionsProvider
+ * @see ChromeOptions
+ */
 public class ChromeOptionsProvider implements BrowserOptionsProvider {
 
+    /**
+     * Configuration properties used to customize Chrome options.
+     */
     private final Properties prop;
 
+    /**
+     * Constructs a ChromeOptionsProvider with the specified configuration
+     * properties.
+     *
+     * @param prop the properties defining Chrome-specific settings
+     * @throws NullPointerException if prop is null
+     */
     public ChromeOptionsProvider(final Properties prop) {
+        if (prop == null) {
+            throw new NullPointerException("Properties cannot be null");
+        }
         this.prop = prop;
     }
 
+    /**
+     * Retrieves configured Chrome options based on the provided properties.
+     * Applies basic options (e.g., headless, incognito), advanced options (if
+     * {@code advanced_mode} is true),
+     * and remote-specific capabilities (if {@code remote} is true). The returned
+     * {@link ChromeOptions}
+     * instance is suitable for both local and remote WebDriver initialization.
+     *
+     * @return a configured {@link ChromeOptions} instance
+     * @see #applyBasicOptions(ChromeOptions)
+     * @see #applyAdvancedOptions(ChromeOptions)
+     * @see #applyRemoteOptions(ChromeOptions)
+     */
     @Override
     public MutableCapabilities getOptions() {
         ChromeOptions options = new ChromeOptions();
 
-        // Add arguments based on configuration properties.
-        if (Boolean.parseBoolean(prop.getProperty("headless"))) {
-            options.addArguments("--headless");
-        }
-        if (Boolean.parseBoolean(prop.getProperty("incognito"))) {
-            options.addArguments("--incognito");
+        applyBasicOptions(options);
+
+        if (Boolean.parseBoolean(prop.getProperty("advanced_mode", "false"))) {
+            applyAdvancedOptions(options);
         }
 
-        // Remote-specific capabilities.
         if (Boolean.parseBoolean(prop.getProperty("remote"))) {
-            options.setCapability("browserName", "chrome");
-            options.setBrowserVersion(prop.getProperty("browser_version", "latest"));
-            options.setCapability("selenoid:options", getSelenoidOptions());
+            applyRemoteOptions(options);
         }
 
         return options;
     }
 
+    /**
+     * Applies basic Chrome options that are included in all configurations.
+     * Configures settings such as headless mode and incognito browsing based on
+     * properties.
+     *
+     * @param options the {@link ChromeOptions} instance to configure
+     */
+    private void applyBasicOptions(ChromeOptions options) {
+        if (Boolean.parseBoolean(prop.getProperty("headless"))) {
+            options.addArguments("--headless=new");
+        }
+        if (Boolean.parseBoolean(prop.getProperty("incognito"))) {
+            options.addArguments("--incognito");
+        }
+    }
+
+    /**
+     * Applies advanced Chrome options when {@code advanced_mode} is enabled.
+     * Configures performance optimizations, window size, security settings, user
+     * agent, proxy,
+     * verbose logging, and mobile emulation based on properties.
+     *
+     * @param options the {@link ChromeOptions} instance to configure
+     */
+    private void applyAdvancedOptions(ChromeOptions options) {
+        if (Boolean.parseBoolean(prop.getProperty("disable_gpu"))) {
+            options.addArguments("--disable-gpu");
+        }
+        if (Boolean.parseBoolean(prop.getProperty("disable_extensions"))) {
+            options.addArguments("--disable-extensions");
+        }
+        if (Boolean.parseBoolean(prop.getProperty("no_sandbox"))) {
+            options.addArguments("--no-sandbox");
+        }
+
+        String windowSize = prop.getProperty("window_size");
+        if (windowSize != null && !windowSize.isBlank()) {
+            options.addArguments("--window-size=" + windowSize);
+        }
+
+        if (Boolean.parseBoolean(prop.getProperty("ignore_ssl_errors"))) {
+            options.addArguments("--ignore-certificate-errors");
+        }
+        if (Boolean.parseBoolean(prop.getProperty("disable_web_security"))) {
+            options.addArguments("--disable-web-security");
+        }
+
+        String userAgent = prop.getProperty("user_agent");
+        if (userAgent != null && !userAgent.isBlank()) {
+            options.addArguments("--user-agent=" + userAgent);
+        }
+
+        String proxyServer = prop.getProperty("proxy_server");
+        if (proxyServer != null && !proxyServer.isBlank()) {
+            options.addArguments("--proxy-server=" + proxyServer);
+        }
+
+        if (Boolean.parseBoolean(prop.getProperty("enable_verbose_logging"))) {
+            options.setCapability("goog:loggingPrefs", getLoggingPrefs());
+        }
+
+        String mobileEmulation = prop.getProperty("mobile_emulation");
+        if (mobileEmulation != null && !mobileEmulation.isBlank()) {
+            options.setExperimentalOption("mobileEmulation", getMobileEmulationOptions(mobileEmulation));
+        }
+    }
+
+    /**
+     * Applies remote-specific Chrome options when {@code remote} is enabled.
+     * Configures capabilities for remote execution (e.g., Selenoid) including
+     * browser version,
+     * Selenoid options, and performance logging (if enabled with
+     * {@code advanced_mode}).
+     *
+     * @param options the {@link ChromeOptions} instance to configure
+     */
+    private void applyRemoteOptions(ChromeOptions options) {
+        options.setCapability("browserName", "chrome");
+        options.setBrowserVersion(prop.getProperty("browser_version", "latest"));
+        options.setCapability("selenoid:options", getSelenoidOptions());
+
+        if (Boolean.parseBoolean(prop.getProperty("enable_performance_logging")) &&
+                Boolean.parseBoolean(prop.getProperty("advanced_mode", "false"))) {
+            options.setCapability("perfLoggingPrefs", getPerfLoggingPrefs());
+        }
+    }
+
+    /**
+     * Builds Selenoid-specific options for remote Chrome execution.
+     * Includes settings like screen resolution, VNC, video recording, and test
+     * name.
+     *
+     * @return a map of Selenoid options
+     */
     private Map<String, Object> getSelenoidOptions() {
         Map<String, Object> selenoidOptions = new HashMap<>();
-        selenoidOptions.put("screenResolution", "1280x1024x24");
+        selenoidOptions.put("screenResolution", prop.getProperty("screen_resolution", "1280x1024x24"));
         selenoidOptions.put("enableVNC", true);
+        selenoidOptions.put("enableVideo", Boolean.parseBoolean(prop.getProperty("enable_video", "false")));
         selenoidOptions.put("name", prop.getProperty("test_name", "default_test"));
         return selenoidOptions;
     }
 
-    @Override
-    public WebDriver createDriver() {
-        return new ChromeDriver((ChromeOptions) getOptions());
+    /**
+     * Builds logging preferences for verbose Chrome logging.
+     * Enables detailed logging for browser and performance categories.
+     *
+     * @return a map of logging preferences
+     */
+    private Map<String, String> getLoggingPrefs() {
+        Map<String, String> loggingPrefs = new HashMap<>();
+        loggingPrefs.put("browser", "ALL");
+        loggingPrefs.put("performance", "ALL");
+        return loggingPrefs;
+    }
+
+    /**
+     * Builds mobile emulation options for Chrome.
+     * Configures the device name for mobile emulation (e.g., "Pixel 2").
+     *
+     * @param deviceName the name of the device to emulate
+     * @return a map of mobile emulation options
+     */
+    private Map<String, Object> getMobileEmulationOptions(String deviceName) {
+        Map<String, Object> mobileEmulation = new HashMap<>();
+        mobileEmulation.put("deviceName", deviceName);
+        return mobileEmulation;
+    }
+
+    /**
+     * Builds performance logging preferences for Chrome.
+     * Enables network and page performance logging for remote execution.
+     *
+     * @return a map of performance logging preferences
+     */
+    private Map<String, Object> getPerfLoggingPrefs() {
+        Map<String, Object> perfLoggingPrefs = new HashMap<>();
+        perfLoggingPrefs.put("enableNetwork", true);
+        perfLoggingPrefs.put("enablePage", true);
+        return perfLoggingPrefs;
     }
 }
