@@ -1,4 +1,4 @@
-package com.neuralytics.components;
+package com.neuralytics.pages;
 
 import com.neuralytics.utils.element.ElementUtil;
 import com.neuralytics.utils.element.JavaScriptUtil;

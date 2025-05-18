@@ -41,7 +41,7 @@ Selenium Test FX is a robust, extensible testing framework built on Selenium Web
 ```java
 package com.neuralytics.tests;
 
-import com.neuralytics.components.NavBar;
+import com.neuralytics.pages.NavBar;
 import com.neuralytics.factories.ReportFactory;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;

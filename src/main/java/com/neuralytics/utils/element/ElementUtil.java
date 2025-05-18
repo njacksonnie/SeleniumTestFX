@@ -65,6 +65,13 @@ public class ElementUtil {
         logger.info("Sent keys '{}' to element: {}", value, locator);
     }
 
+    public void doPressKey(By locator, Keys key) {
+        nullCheck(key.toString());
+        WebElement element = getElement(locator);
+        element.sendKeys(key);
+        logger.info("Pressed key '{}' to element: {}", key, locator);
+    }
+
     public void doSendKeys(By locator, String value, int timeOut) {
         nullCheck(value);
         WebElement element = ElementWaitUtil.waitForElementVisible(driver, locator, timeOut);
